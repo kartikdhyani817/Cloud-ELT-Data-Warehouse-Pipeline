@@ -1,0 +1,11 @@
+order_id,customer_id,customer_name,product,category,quantity,unit_price,order_date,city,country
+ORD001,C001,Aarav Sharma,Laptop,Electronics,1,75000,2026-08-01,Delhi,India
+ORD002,C002,Riya Mehta,Smartphone,Electronics,2,35000,2026-08-02,Mumbai,India
+ORD003,C003,Daniel Murphy,Office Chair,Furniture,1,9000,2026-08-03,Dublin,Ireland
+ORD004,C004,Sarah Kelly,Running Shoes,Fashion,2,4500,2026-08-04,Cork,Ireland
+ORD005,C001,Aarav Sharma,Keyboard,Electronics,1,2500,2026-08-05,Delhi,India
+ORD006,C005,Emma Byrne,Desk,Furniture,1,12000,2026-08-06,Galway,Ireland
+ORD007,C006,Arjun Singh,Backpack,Fashion,3,2200,2026-08-07,Delhi,India
+ORD008,C007,Noah Walsh,Headphones,Electronics,2,3500,2026-08-08,Limerick,Ireland
+ORD009,C008,Priya Kapoor,Smartphone,Electronics,1,35000,2026-08-09,Bengaluru,India
+ORD010,C009,Jack Ryan,Office Chair,Furniture,2,9000,2026-08-10,Dublin,Ireland
