@@ -592,7 +592,9 @@ Next milestone:
 **Build incremental data loading.**
 
 ---
+## Day 3 Update
 
+Completed the MySQL raw warehouse layer and connected the Python ingestion pipeline to MySQL.
 ## Author
 
 **Kartik Dhyani**
