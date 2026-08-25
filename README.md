@@ -1,23 +1,27 @@
 # Cloud-Style ELT Data Warehouse Pipeline
 
-I'm building this project to understand how a modern **ELT and Data Warehouse pipeline** works from end to end.
+I'm building this project to understand how a real-world **Data Engineering pipeline** is designed and how raw business data moves from a source system into an analytics-ready warehouse.
 
-Instead of jumping directly into databases and orchestration tools, I'm building the pipeline one layer at a time. The goal is to understand how raw business data is ingested, cleaned, loaded into a warehouse, transformed into analytics-ready models, tested, and eventually automated.
+I'm developing it step by step instead of trying to build everything at once. The idea is to understand each layer properly — ingestion, storage, transformation, testing, and eventually orchestration.
+
+The project is currently being built locally using free tools.
 
 ---
 
 ## Project Goal
 
-The final pipeline will look roughly like this:
+The final pipeline is planned to look like this:
 
 ```text
 Raw Data / API
       ↓
 Python Ingestion
       ↓
-PostgreSQL
+Data Validation & Cleaning
       ↓
-Raw Layer
+MySQL
+      ↓
+Raw Warehouse Layer
       ↓
 dbt
       ↓
@@ -34,7 +38,7 @@ Analytics
 Dashboard
 ```
 
-The project focuses on both **Data Engineering** and **Analytics Engineering** concepts.
+The project combines **Data Engineering** and **Analytics Engineering** concepts.
 
 ---
 
@@ -45,24 +49,25 @@ The project will gradually use:
 - Python
 - Pandas
 - SQL
-- PostgreSQL
+- MySQL
 - dbt Core
 - Apache Airflow
 - Streamlit
 - Pytest
-- Git & GitHub
+- Git
+- GitHub
 
-Everything is being built locally using free and open-source tools.
+The tools are being used locally with a focus on free and open-source technologies.
 
 ---
 
-## Development Progress
+# Development Progress
 
-| Day | Implementation | Status |
+| Day | Work Completed | Status |
 |---|---|---|
 | Day 1 | Project Setup & Architecture | ✅ |
-| Day 2 | Data Source & Python Ingestion | ✅ |
-| Day 3 | PostgreSQL Raw Layer | ⏳ |
+| Day 2 | Python Data Ingestion Pipeline | ✅ |
+| Day 3 | MySQL Raw Warehouse Layer | ✅ |
 | Day 4 | Incremental Data Loading | ⏳ |
 | Day 5 | dbt Setup & Staging Models | ⏳ |
 | Day 6 | Fact & Dimension Tables | ⏳ |
@@ -77,9 +82,19 @@ Everything is being built locally using free and open-source tools.
 
 # Day 1 — Project Setup
 
-I started by planning the overall architecture and creating a clean folder structure for the project.
+The first day was mainly about planning the project and creating a structure that could support the complete pipeline later.
 
-The initial structure separates ingestion, SQL, dbt, Airflow, dashboard, testing, and data files so that each part of the pipeline can grow independently.
+I separated the project into different areas for:
+
+- Data
+- Python ingestion
+- SQL
+- dbt
+- Airflow
+- Dashboard
+- Testing
+
+The initial structure was:
 
 ```text
 Cloud_ELT_Data_Warehouse/
@@ -100,13 +115,13 @@ Cloud_ELT_Data_Warehouse/
 └── .gitignore
 ```
 
-I also created the Python environment and added the initial project dependencies.
+I also created the initial GitHub repository and project configuration.
 
 ---
 
-# Day 2 — Python Data Ingestion Pipeline
+# Day 2 — Python Data Ingestion
 
-Day 2 was the first actual pipeline implementation.
+On Day 2, I started building the actual pipeline.
 
 I created a small retail orders dataset containing information such as:
 
@@ -121,94 +136,208 @@ I created a small retail orders dataset containing information such as:
 - City
 - Country
 
-The goal wasn't just to read a CSV file. I wanted to create a basic ingestion layer that checks the incoming data before it moves further into the warehouse.
-
----
-
-## Current Data Flow
-
-The pipeline currently looks like:
-
-```text
-Raw Orders CSV
-      ↓
-Python Ingestion
-      ↓
-Column Validation
-      ↓
-Data Cleaning
-      ↓
-Business Transformation
-      ↓
-Clean Orders CSV
-      ↓
-Ready for PostgreSQL
-```
-
-The next step will replace the final local-only stage with a proper PostgreSQL raw warehouse layer.
-
----
-
-## Raw Data
-
-The source dataset is stored at:
+The raw dataset is stored in:
 
 ```text
 data/raw/orders.csv
 ```
 
-It contains retail orders from different customers, products, categories, cities, and countries.
-
-Example structure:
-
-```text
-order_id
-customer_id
-customer_name
-product
-category
-quantity
-unit_price
-order_date
-city
-country
-```
-
 ---
 
-## Python Ingestion
+## Data Ingestion Flow
 
-The ingestion logic is located in:
+The Python ingestion process currently works like this:
+
+```text
+orders.csv
+    ↓
+Load Data
+    ↓
+Validate Columns
+    ↓
+Clean Data
+    ↓
+Remove Duplicates
+    ↓
+Convert Data Types
+    ↓
+Calculate Total Amount
+    ↓
+orders_clean.csv
+```
+
+The main ingestion script is:
 
 ```text
 ingestion/load_orders.py
 ```
 
-The script is responsible for loading and preparing the source data.
+---
 
-I separated the process into different functions rather than putting everything into one block of code.
+## Validation
 
-The main stages are:
+Before processing the data, the script checks that the required columns exist.
 
-```text
-load_orders()
-      ↓
-validate_orders()
-      ↓
-clean_orders()
-      ↓
-save_clean_data()
-```
+It also handles:
 
-This makes the ingestion process easier to understand, test, and extend later.
+- Duplicate rows
+- Invalid quantities
+- Invalid prices
+- Missing important fields
+- Date conversion
+- Numeric conversion
+
+This prevents obviously invalid data from entering the next stage.
 
 ---
 
-## Data Validation
+## Business Transformation
 
-Before transforming the dataset, the ingestion pipeline checks whether all required columns are available.
+A calculated field called:
 
-The expected columns include:
+```text
+total_amount
+```
+
+was added.
+
+It is calculated as:
+
+```text
+quantity × unit_price
+```
+
+This gives us a basic business metric that can later be used for analytics.
+
+---
+
+## Processed Dataset
+
+After ingestion and cleaning, the data is saved to:
+
+```text
+data/processed/orders_clean.csv
+```
+
+At this point the pipeline became:
+
+```text
+Raw CSV
+   ↓
+Python
+   ↓
+Validation
+   ↓
+Cleaning
+   ↓
+Transformation
+   ↓
+Processed CSV
+```
+
+---
+
+# Day 3 — MySQL Raw Warehouse Layer
+
+Day 3 was the first time the project moved from local files into an actual database.
+
+I already had **MySQL installed locally**, so I decided to use MySQL instead of PostgreSQL for this project.
+
+The current architecture is:
+
+```text
+orders.csv
+    ↓
+Python Ingestion
+    ↓
+orders_clean.csv
+    ↓
+Python MySQL Loader
+    ↓
+MySQL
+    ↓
+raw_orders
+```
+
+---
+
+## MySQL Database
+
+I created a MySQL database:
+
+```text
+ecommerce_warehouse
+```
+
+Inside it, the first warehouse table is:
+
+```text
+raw_orders
+```
+
+This table represents the raw warehouse layer of the pipeline.
+
+---
+
+## Database Connection
+
+Database credentials are stored in a local `.env` file rather than directly inside the Python code.
+
+Example:
+
+```text
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=ecommerce_warehouse
+DB_USER=root
+DB_PASSWORD=********
+```
+
+The `.env` file is included in `.gitignore` so database credentials are not uploaded to GitHub.
+
+---
+
+## MySQL Connection
+
+The database connection is handled by:
+
+```text
+ingestion/database.py
+```
+
+The project uses:
+
+```text
+mysql-connector-python
+```
+
+to connect Python with MySQL.
+
+The connection can be tested using:
+
+```bash
+python -m ingestion.database
+```
+
+A successful connection returns:
+
+```text
+MySQL connection successful.
+```
+
+---
+
+# Loading Data Into MySQL
+
+The processed CSV is loaded into MySQL using:
+
+```text
+ingestion/load_to_mysql.py
+```
+
+The script creates the `raw_orders` table if it doesn't already exist.
+
+The table contains fields such as:
 
 ```text
 order_id
@@ -221,123 +350,123 @@ unit_price
 order_date
 city
 country
+total_amount
 ```
-
-If one of the required columns is missing, the pipeline stops instead of silently processing an incorrect dataset.
-
-This is a simple validation layer for now, but it gives the project a foundation for stronger data-quality checks later.
 
 ---
 
-## Data Cleaning
+## Duplicate Handling
 
-After validation, the pipeline performs some basic cleaning.
+One important improvement on Day 3 was handling duplicate orders.
 
-This includes:
+The `order_id` is used as the primary key.
 
-- Standardizing column names
-- Removing duplicate rows
-- Converting quantity to numeric
-- Converting unit price to numeric
-- Converting order dates to datetime
-- Removing records missing important fields
-- Removing orders with invalid quantities
-- Removing orders with invalid prices
+The loader uses:
+
+```sql
+ON DUPLICATE KEY UPDATE
+```
+
+This means running the ingestion script multiple times doesn't simply insert the same order again.
 
 For example:
 
 ```text
-quantity <= 0
+First run  → 10 records
+Second run → still 10 records
 ```
 
-or:
+instead of:
 
 ```text
-unit_price <= 0
+First run  → 10 records
+Second run → 20 records
 ```
 
-will not be included in the clean dataset.
+This is an early step toward making the pipeline safe to run repeatedly.
 
 ---
 
-## Business Transformation
+# Data Verification
 
-I also added the first calculated business field:
-
-```text
-total_amount = quantity × unit_price
-```
+After loading the data, I verified it directly in MySQL.
 
 For example:
 
-```text
-Product     : Laptop
-Quantity    : 2
-Unit Price  : 75,000
-
-Total Amount = 150,000
+```sql
+SELECT *
+FROM raw_orders;
 ```
 
-This is a small transformation, but it introduces the idea of converting raw source data into information that is more useful for analytics.
+To check the number of records:
+
+```sql
+SELECT COUNT(*) AS total_rows
+FROM raw_orders;
+```
+
+And to calculate total revenue:
+
+```sql
+SELECT
+    SUM(total_amount) AS total_revenue
+FROM raw_orders;
+```
+
+I also tested basic aggregation:
+
+```sql
+SELECT
+    category,
+    SUM(total_amount) AS revenue
+FROM raw_orders
+GROUP BY category
+ORDER BY revenue DESC;
+```
+
+This confirmed that the data successfully moved from Python into MySQL without losing the expected information.
 
 ---
 
-## Processed Data
+# Current Architecture
 
-After validation and cleaning, the output is stored in:
-
-```text
-data/processed/orders_clean.csv
-```
-
-So the current storage flow is:
+After Day 3, the pipeline looks like:
 
 ```text
-data/raw/orders.csv
-          ↓
-  Python Ingestion
-          ↓
-data/processed/orders_clean.csv
+                    RAW DATA
+                       │
+                       ▼
+                orders.csv
+                       │
+                       ▼
+              Python Ingestion
+                       │
+              ┌────────┴────────┐
+              │                 │
+         Validation          Cleaning
+              │                 │
+              └────────┬────────┘
+                       ▼
+              orders_clean.csv
+                       │
+                       ▼
+             Python MySQL Loader
+                       │
+                       ▼
+                ┌─────────────┐
+                │    MySQL    │
+                │             │
+                │ ecommerce_  │
+                │ warehouse   │
+                └──────┬──────┘
+                       │
+                       ▼
+                  raw_orders
 ```
-
-The processed dataset is now ready to be loaded into PostgreSQL.
 
 ---
 
-## Running the Ingestion Pipeline
-
-From the project root:
-
-```bash
-python -m ingestion.load_orders
-```
-
-A successful run should show information similar to:
-
-```text
-============================================================
-Cloud ELT Data Warehouse - Order Ingestion
-============================================================
-
-Raw data loaded successfully.
-
-Raw Rows    : 10
-Required columns validated successfully.
-Clean Rows  : 10
-Columns     : 11
-Total Sales : ...
-Clean data saved to: data/processed/orders_clean.csv
-
-Day 2 ingestion completed successfully.
-```
-
-The exact sales value depends on the source data.
-
----
-
-## Current Project Structure
-
-After Day 2:
+# Current Project Structure
 
 ```text
 Cloud_ELT_Data_Warehouse/
@@ -351,7 +480,9 @@ Cloud_ELT_Data_Warehouse/
 │
 ├── ingestion/
 │   ├── __init__.py
-│   └── load_orders.py
+│   ├── load_orders.py
+│   ├── database.py
+│   └── load_to_mysql.py
 │
 ├── sql/
 ├── dbt_project/
@@ -359,76 +490,106 @@ Cloud_ELT_Data_Warehouse/
 ├── dashboard/
 ├── tests/
 │
+├── .env
+├── .gitignore
 ├── README.md
-├── requirements.txt
-└── .gitignore
+└── requirements.txt
 ```
 
 ---
 
-## What I've Learned So Far
+# What I've Learned So Far
 
-The project is still at an early stage, but the first two days have already covered:
+After the first three days, the project has covered the basic foundation of a data warehouse pipeline.
 
-- Basic ELT architecture
-- Organizing a Data Engineering project
-- Raw vs processed data
-- CSV ingestion with Pandas
-- Required-column validation
+I've worked with:
+
+- Python data ingestion
+- Pandas
+- CSV processing
+- Data validation
+- Data cleaning
 - Data type conversion
+- Basic business transformations
+- MySQL
+- Python-to-MySQL connectivity
+- Database credentials using environment variables
+- Raw warehouse tables
+- Primary keys
 - Duplicate handling
-- Basic data-quality checks
-- Business transformations
-- Creating reusable ingestion functions
+- Basic SQL analytics
 
-The main thing I'm trying to avoid is treating the project as one large Python script. Each stage is being built separately so it can later become part of a larger automated pipeline.
+More importantly, the project is starting to resemble an actual data pipeline rather than just a data analysis script.
 
 ---
 
-## What's Next?
+# What's Next?
 
-### Day 3 — PostgreSQL Raw Layer
+## Day 4 — Incremental Data Loading
 
-The next step is to introduce the actual database layer.
+The next step is to make the pipeline more realistic.
+
+Instead of loading the complete dataset every time, I'll introduce an **incremental loading approach**.
 
 The planned flow will become:
 
 ```text
-orders.csv
-    ↓
-Python
-    ↓
-Cleaning / Validation
-    ↓
-PostgreSQL
-    ↓
-raw_orders
+New / Updated Data
+       ↓
+Python Ingestion
+       ↓
+Detect Existing Orders
+       ↓
+Insert New Records
+       ↓
+Update Existing Records
+       ↓
+MySQL
 ```
 
-This will introduce:
+This will help introduce concepts such as:
 
-- PostgreSQL setup
-- Database connections from Python
-- Warehouse schemas
-- Raw tables
-- SQL table creation
-- Loading DataFrames into PostgreSQL
-
-From there, the project can start moving from a simple Python ingestion script toward a proper **ELT Data Warehouse pipeline**.
+- Incremental processing
+- Upserts
+- Data freshness
+- Load timestamps
+- Change detection
+- Repeatable pipelines
 
 ---
 
-## Project Status
+# Project Status
 
-**Day 2/12 completed — development in progress.**
+**Day 3/12 completed — Development in Progress**
 
 Current milestone:
 
-**Raw Data → Python Ingestion → Validation → Cleaning → Processed Data ✅**
+```text
+Raw CSV
+   ↓
+Python Ingestion
+   ↓
+Validation & Cleaning
+   ↓
+Processed CSV
+   ↓
+MySQL
+   ↓
+raw_orders
+```
+
+✅ Python ingestion completed  
+✅ Data validation completed  
+✅ Data cleaning completed  
+✅ MySQL database created  
+✅ Python → MySQL connection completed  
+✅ Raw warehouse table created  
+✅ Duplicate handling added  
+✅ Data verified using SQL  
 
 Next milestone:
 
-**Processed Data → PostgreSQL Raw Warehouse**
+**Build incremental data loading.**
 
 ---
 
@@ -436,4 +597,4 @@ Next milestone:
 
 **Kartik Dhyani**
 
-Aspiring Data Engineer interested in building practical projects around Python, SQL, ETL/ELT, data warehousing, batch processing, streaming, and modern Data Engineering tools.
+Aspiring Data Engineer interested in Python, SQL, Data Warehousing, ETL/ELT pipelines, analytics engineering, batch processing, and modern Data Engineering tools.
