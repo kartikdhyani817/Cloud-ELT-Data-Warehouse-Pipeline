@@ -1,4 +1,4 @@
-# Cloud-Style ELT Data Warehouse Pipeline
+# Cloud-Style ELT Data Warehouse Pipelinek
 
 I'm building this project to understand how a real-world **Data Engineering pipeline** is designed and how raw business data moves from a source system into an analytics-ready warehouse.
 
