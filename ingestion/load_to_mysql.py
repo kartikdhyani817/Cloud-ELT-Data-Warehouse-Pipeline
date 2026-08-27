@@ -5,15 +5,13 @@ import pandas as pd
 from ingestion.database import get_connection
 
 
-INPUT_FILE = Path(
-    "data/processed/orders_clean.csv"
-)
+INPUT_FILE = Path("data/processed/orders_clean.csv")
 
 
 def create_table(connection):
     cursor = connection.cursor()
 
-    create_table_query = """
+    query = """
     CREATE TABLE IF NOT EXISTS raw_orders (
         order_id VARCHAR(50) PRIMARY KEY,
         customer_id VARCHAR(50),
@@ -25,20 +23,20 @@ def create_table(connection):
         order_date DATE,
         city VARCHAR(100),
         country VARCHAR(100),
-        total_amount DECIMAL(14, 2)
+        total_amount DECIMAL(14, 2),
+        loaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """
 
-    cursor.execute(create_table_query)
-
+    cursor.execute(query)
     connection.commit()
-
     cursor.close()
 
     print("raw_orders table is ready.")
 
 
 def load_orders(connection, df):
+
     cursor = connection.cursor()
 
     insert_query = """
@@ -69,45 +67,61 @@ def load_orders(connection, df):
         order_date = VALUES(order_date),
         city = VALUES(city),
         country = VALUES(country),
-        total_amount = VALUES(total_amount)
+        total_amount = VALUES(total_amount),
+        loaded_at = CURRENT_TIMESTAMP
     """
 
     records = []
 
     for _, row in df.iterrows():
+
         records.append(
             (
-                row["order_id"],
-                row["customer_id"],
-                row["customer_name"],
-                row["product"],
-                row["category"],
+                str(row["order_id"]),
+                str(row["customer_id"]),
+                str(row["customer_name"]),
+                str(row["product"]),
+                str(row["category"]),
                 int(row["quantity"]),
                 float(row["unit_price"]),
                 row["order_date"].date(),
-                row["city"],
-                row["country"],
+                str(row["city"]),
+                str(row["country"]),
                 float(row["total_amount"]),
             )
         )
 
-    cursor.executemany(
-        insert_query,
-        records,
-    )
+    try:
 
-    connection.commit()
+        cursor.executemany(
+            insert_query,
+            records,
+        )
+
+        connection.commit()
+
+    except Exception as error:
+
+        connection.rollback()
+
+        print("\nMySQL Error:")
+        print(error)
+
+        cursor.close()
+
+        raise
 
     cursor.close()
 
     print(
-        f"{len(records)} records loaded into MySQL."
+        f"{len(records)} records processed successfully."
     )
 
 
 def main():
+
     print("=" * 60)
-    print("Cloud ELT Data Warehouse - MySQL Loader")
+    print("Incremental MySQL Order Loader")
     print("=" * 60)
 
     if not INPUT_FILE.exists():
@@ -121,12 +135,13 @@ def main():
     )
 
     print(
-        f"\nProcessed rows : {len(df)}"
+        f"\nRecords found in CSV : {len(df)}"
     )
 
     connection = get_connection()
 
     try:
+
         create_table(connection)
 
         load_orders(
@@ -135,10 +150,11 @@ def main():
         )
 
     finally:
+
         connection.close()
 
     print(
-        "\nDay 3 MySQL loading completed successfully."
+        "\nDay 4 incremental loading completed successfully."
     )
 
 
