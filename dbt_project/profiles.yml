@@ -1,0 +1,14 @@
+dbt_project:
+  target: dev
+
+  outputs:
+    dev:
+      type: mysql
+      server: localhost
+      port: 3306
+      schema: ecommerce_warehouse
+      username: root
+      password: password
+      database: ecommerce_warehouse
+      driver: MySQL ODBC 8.0 Unicode Driver
+      threads: 1
